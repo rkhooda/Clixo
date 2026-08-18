@@ -1,0 +1,13 @@
+{
+  "projects": [
+    {
+      "name": "clixo-frontend",
+      "framework": "nextjs",
+      "rootDirectory": "frontend",
+      "buildCommand": "npm run build",
+      "outputDirectory": ".next",
+      "devCommand": "npm run dev",
+      "installCommand": "npm install"
+    }
+  ]
+}
