@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  outputFileTracingRoot: __dirname,
   experimental: {
     // Both are barrel files; without this every icon and every RainbowKit
     // export gets pulled into the chunk that imports one of them.
