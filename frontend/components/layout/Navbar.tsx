@@ -20,11 +20,22 @@ const NavbarWallet = dynamic(
   }
 );
 
+// Dashboard leads: it is the destination a returning visitor is here for,
+// and everything after it reads outward — the open market, then the pitch.
 const navLinks = [
-  { label: "Browse Tasks", href: "/browse" },
   { label: "Dashboard", href: "/dashboard" },
+  { label: "Browse Tasks", href: "/browse" },
   { label: "How it works", href: "/#how-it-works" },
 ];
+
+// A hash link is a scroll target on the home page, never a "current page".
+// Route links stay lit across their children, so /browse/42 still marks Browse
+// Tasks — the old `pathname === href` left every task detail page with no nav
+// state at all.
+function isActive(pathname: string, href: string) {
+  if (href.includes("#")) return false;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 const createTaskLink = { label: "Post a Task", href: "/create-task" };
 
@@ -95,7 +106,11 @@ export function Navbar() {
 
             <div className="hidden items-stretch gap-0.5 md:flex">
               {navLinks.map((link) => (
-                <DesktopNavLink key={link.href} link={link} active={pathname === link.href} />
+                <DesktopNavLink
+                  key={link.href}
+                  link={link}
+                  active={isActive(pathname, link.href)}
+                />
               ))}
             </div>
           </div>
@@ -111,6 +126,11 @@ export function Navbar() {
             >
               {createTaskLink.label}
             </Link>
+
+            <span
+              aria-hidden="true"
+              className="hidden h-4 w-px bg-line md:block"
+            />
 
             <NavbarWallet />
 
@@ -157,7 +177,7 @@ export function Navbar() {
             {/* Drawer links */}
             <nav className="grow divide-y divide-subtle p-3">
               {navLinks.map((link) => {
-                const active = pathname === link.href;
+                const active = isActive(pathname, link.href);
                 return (
                   <Link
                     key={link.href}
