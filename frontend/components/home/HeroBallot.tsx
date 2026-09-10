@@ -65,10 +65,11 @@ const FEED = [
 
 const SEAL_MS = 520;
 const FEED_MS = 1900;
-/* Dwell before the ballot rolls itself over. The slowest reveal animation —
-   the reward count-up — lands at 1100ms, so this leaves ~1.9s of settled
-   result to actually read. */
-const AUTO_ADVANCE_MS = 3000;
+/* Dwell before the ballot rolls itself over, timed from the reveal. The
+   slowest reveal animation — the reward count-up — lands at 1100ms, so this
+   leaves ~3.4s of settled result to actually read. That is the whole budget
+   now: no countdown rail hurries the eye along any more. */
+const AUTO_ADVANCE_MS = 4500;
 
 export function HeroBallot() {
   const reduce = useReducedMotion();
@@ -146,10 +147,10 @@ export function HeroBallot() {
     if (next === 0) setPicks(BALLOTS.map(() => null));
   }
 
-  return (
-    /* Every block that only appears once revealed reserves its height while
-       open, so casting a vote never shifts the card in its centred panel. */
-    <div className="w-full max-w-[400px] rounded-lg border border-line bg-surface p-4 sm:p-5">
+  /* Every block that only appears once revealed reserves its height while
+     open, so casting a vote never shifts the card in its centred panel. */
+  const body = (
+    <>
       <div className="flex items-center justify-between">
         <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-lo">
           Task #{ballot.id} · {index + 1}/{BALLOTS.length}
@@ -382,48 +383,46 @@ export function HeroBallot() {
           </>
         )}
       </div>
+    </>
+  );
 
-      {/* The card advances itself, so this slot is a countdown rather than a
-          control — without it the ballot would swap with no warning while the
-          visitor is still reading the result. */}
-      <div className="mt-2 flex h-8 items-center gap-3">
-        {revealed &&
-          (reduce ? (
-            <button
-              type="button"
-              onClick={advance}
-              className={buttonVariants({
-                variant: "ghost",
-                size: "sm",
-                className: "group px-0 hover:bg-transparent",
-              })}
-            >
-              Next task
-              <ArrowRight
-                size={13}
-                className="transition-transform duration-150 group-hover:translate-x-0.5"
-              />
-            </button>
-          ) : (
-            <>
-              <span className="shrink-0 font-mono text-[10px] tracking-[0.06em] text-dim uppercase">
-                Next task
-              </span>
-              <div
-                aria-hidden="true"
-                className="h-px flex-1 overflow-hidden bg-line"
-              >
-                <m.div
-                  key={index}
-                  className="h-full bg-lo"
-                  initial={{ width: 0 }}
-                  animate={{ width: "100%" }}
-                  transition={{ duration: AUTO_ADVANCE_MS / 1000, ease: "linear" }}
-                />
-              </div>
-            </>
-          ))}
-      </div>
+  return (
+    <div className="w-full max-w-[400px] rounded-lg border border-line bg-surface p-4 sm:p-5">
+      {/* Re-keyed on the ballot, so the next one is dealt in — a fade and a
+          short lift — instead of the text swapping in place. There is no exit
+          half on purpose: AnimatePresence would have to hold both ballots
+          mounted, which doubles the card's height mid-transition. */}
+      {reduce ? (
+        body
+      ) : (
+        <m.div
+          key={index}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {body}
+        </m.div>
+      )}
+
+      {/* Reduced motion never gets the timer, so it keeps a real control. */}
+      {reduce && revealed && (
+        <button
+          type="button"
+          onClick={advance}
+          className={buttonVariants({
+            variant: "ghost",
+            size: "sm",
+            className: "group mt-3 px-0 hover:bg-transparent",
+          })}
+        >
+          Next task
+          <ArrowRight
+            size={13}
+            className="transition-transform duration-150 group-hover:translate-x-0.5"
+          />
+        </button>
+      )}
     </div>
   );
 }
