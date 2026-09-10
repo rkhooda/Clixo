@@ -302,23 +302,29 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-*,
-*::before,
-*::after,
-a,
-button,
-input,
-textarea,
-select,
-summary,
-[role="button"],
-.cursor-pointer {
-  cursor: none !important;
-}
+/* The drawn cursor replaces the native one, so the native one is hidden
+   everywhere. Gated on the same query CustomCursor mounts under: a touch
+   device gets no replacement, so hiding its cursor there would leave a
+   trackpad-and-touchscreen laptop with nothing to point with. */
+@media (hover: hover) and (pointer: fine) {
+  *,
+  *::before,
+  *::after,
+  a,
+  button,
+  input,
+  textarea,
+  select,
+  summary,
+  [role="button"],
+  .cursor-pointer {
+    cursor: none !important;
+  }
 
-input,
-textarea,
-select {
-  cursor: auto !important;
+  input,
+  textarea,
+  select {
+    cursor: auto !important;
+  }
 }
 

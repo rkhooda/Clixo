@@ -58,14 +58,12 @@ export function HeroParticles() {
     const mouse = { x: -9999, y: -9999, inside: false };
     let presence = 0;
 
-    const resize = () => {
-      canvas.width = parent.clientWidth;
-      canvas.height = parent.clientHeight;
-      particles = makeParticles(canvas.width, canvas.height);
-    };
-    resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(parent);
+    // Without a cursor there is nothing for the grains to react to, so the
+    // field is static and one frame is the entire animation. Looping would
+    // burn a phone's battery redrawing 300 identical rectangles at 60fps.
+    const reactive = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    let onscreen = false;
+    let raf = 0;
 
     const onMove = (e: MouseEvent) => {
       const r = canvas.getBoundingClientRect();
@@ -82,8 +80,7 @@ export function HeroParticles() {
     parent.addEventListener("mouseleave", onLeave);
 
     const ctx = canvas.getContext("2d")!;
-    let raf = 0;
-    const frame = () => {
+    const step = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       presence += ((mouse.inside ? 1 : 0) - presence) * 0.06;
 
@@ -164,13 +161,53 @@ export function HeroParticles() {
         ctx.fill();
         ctx.restore();
       }
+    };
+
+    const frame = () => {
+      step();
       raf = requestAnimationFrame(frame);
     };
-    raf = requestAnimationFrame(frame);
+
+    const start = () => {
+      if (raf) return;
+      if (reactive) raf = requestAnimationFrame(frame);
+      else step();
+    };
+
+    const stop = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    };
+
+    const resize = () => {
+      const w = parent.clientWidth;
+      const h = parent.clientHeight;
+      // A dvh-sized hero resizes whenever a mobile URL bar collapses; without
+      // this guard the observer reshuffled all 300 grains on a no-op.
+      if (w === canvas.width && h === canvas.height) return;
+      canvas.width = w;
+      canvas.height = h;
+      particles = makeParticles(w, h);
+      if (!reactive && onscreen) step();
+    };
+    resize();
+
+    const ro = new ResizeObserver(resize);
+    ro.observe(parent);
+
+    // The hero is one screen tall, so this loop spent most of a session
+    // animating pixels nobody was looking at.
+    const io = new IntersectionObserver(([entry]) => {
+      onscreen = entry.isIntersecting;
+      if (onscreen) start();
+      else stop();
+    });
+    io.observe(canvas);
 
     return () => {
-      cancelAnimationFrame(raf);
+      stop();
       ro.disconnect();
+      io.disconnect();
       parent.removeEventListener("mousemove", onMove);
       parent.removeEventListener("mouseleave", onLeave);
     };
