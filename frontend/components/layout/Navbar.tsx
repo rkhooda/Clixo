@@ -20,21 +20,26 @@ const NavbarWallet = dynamic(
   }
 );
 
+type NavLink = { label: string; href: string; also?: string[] };
+
 // Dashboard leads: it is the destination a returning visitor is here for,
 // and everything after it reads outward — the open market, then the pitch.
-const navLinks = [
+const navLinks: NavLink[] = [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Browse Tasks", href: "/browse" },
+  // A task detail page lives at /tasks/[id] and its ballot at /vote/[id] —
+  // both are reached from Browse and neither has a nav entry of its own, so
+  // they keep Browse lit instead of clearing the whole bar.
+  { label: "Browse Tasks", href: "/browse", also: ["/tasks", "/vote"] },
   { label: "How it works", href: "/#how-it-works" },
 ];
 
 // A hash link is a scroll target on the home page, never a "current page".
-// Route links stay lit across their children, so /browse/42 still marks Browse
-// Tasks — the old `pathname === href` left every task detail page with no nav
-// state at all.
-function isActive(pathname: string, href: string) {
-  if (href.includes("#")) return false;
-  return pathname === href || pathname.startsWith(`${href}/`);
+// The old `pathname === href` matched only the exact route, which left every
+// task, vote and detail page with no nav state at all.
+function isActive(pathname: string, link: NavLink) {
+  if (link.href.includes("#")) return false;
+  const roots = [link.href, ...(link.also ?? [])];
+  return roots.some((r) => pathname === r || pathname.startsWith(`${r}/`));
 }
 
 const createTaskLink = { label: "Post a Task", href: "/create-task" };
@@ -109,7 +114,7 @@ export function Navbar() {
                 <DesktopNavLink
                   key={link.href}
                   link={link}
-                  active={isActive(pathname, link.href)}
+                  active={isActive(pathname, link)}
                 />
               ))}
             </div>
@@ -177,7 +182,7 @@ export function Navbar() {
             {/* Drawer links */}
             <nav className="grow divide-y divide-subtle p-3">
               {navLinks.map((link) => {
-                const active = isActive(pathname, link.href);
+                const active = isActive(pathname, link);
                 return (
                   <Link
                     key={link.href}
