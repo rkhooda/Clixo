@@ -9,20 +9,14 @@ import { UseCases } from "@/components/home/UseCases";
 import { FAQ } from "@/components/home/FAQ";
 import { FinalCTA } from "@/components/home/FinalCTA";
 import { Footer } from "@/components/layout/Footer";
-import { statsApi } from "@/lib/api";
 
-async function getStats(): Promise<null> {
-  try {
-    await statsApi.get();
-  } catch {
-    // ignore
-  }
-  return null;
-}
-
-export default async function LandingPage() {
-  await getStats(); // warm cache for other pages
-
+// This used to await the whole task list on the server to "warm the cache",
+// which warmed nothing: axios never touches Next's fetch cache, the result was
+// discarded, and LiveStats fetches the same thing on the client regardless. It
+// bought a full backend round trip — 15s timeout, no loading boundary — on
+// every render of this page, which is every request in dev and the build
+// itself in production.
+export default function LandingPage() {
   return (
     <div className="bg-ink">
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
