@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Inter, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/wallet/Providers";
-import { BootSplash } from "@/components/layout/BootSplash";
-import { RouteProgress } from "@/components/layout/RouteProgress";
+import { AppLoader } from "@/components/layout/AppLoader";
 import { Navbar } from "@/components/layout/Navbar";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
@@ -88,8 +87,7 @@ export default function RootLayout({
       className={`${geist.variable} ${inter.variable} ${jetbrainsMono.variable}`}
     >
       <body className="antialiased cursor-none">
-        <BootSplash />
-        <RouteProgress />
+        <AppLoader />
         <CustomCursor />
         <Providers>
           <ScrollToTop />
