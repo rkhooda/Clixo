@@ -28,8 +28,10 @@ export const getMyTasks = async (req: Request, res: Response) => {
     const tasks = await prisma.task.findMany({
       where: { user_id: user.id },
       include: {
-        submissions: true,
         options: true,
+        // Only the count is returned. `submissions: true` fetched every vote
+        // row for every task the creator owns just to call .length on it.
+        _count: { select: { submissions: true } },
       },
       orderBy: {
         createdAt: "desc"
@@ -49,7 +51,7 @@ export const getMyTasks = async (req: Request, res: Response) => {
       signature: task.signature,
       amount: task.amount,
       deadline: task.deadline,
-      totalSubmissions: task.submissions.length,
+      totalSubmissions: task._count.submissions,
       options: task.options.map(opt => ({
         id: opt.id,
         ipfs_cid: opt.ipfs_cid,
@@ -82,13 +84,16 @@ export const getMySubmissions = async (req: Request, res: Response) => {
   
     const submissions = await prisma.submission.findMany({
       where: { worker_id: workerId },
-      include: {
-        task: {
-          include: {
-            options: true
-          }
-        },
-        option: true,
+      // Selects rather than includes: the response uses four task columns and
+      // two option columns. The old `task: { include: { options: true } }`
+      // fetched every option of every task the worker has ever voted on and
+      // then read none of them.
+      select: {
+        task_id: true,
+        option_id: true,
+        createdAt: true,
+        task: { select: { status: true, title: true, budget: true } },
+        option: { select: { gateway_url: true, image_url: true } },
       },
       orderBy: { createdAt: "desc" },
     });

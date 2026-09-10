@@ -50,7 +50,10 @@ export const getTasksById = async (req: Request, res: Response) => {
       where: { id: taskId},
       include: {
         options: true,
-        submissions: true,
+        // Only the count is returned, and this row is fetched on every load of
+        // both the ballot and the results page — `submissions: true` pulled
+        // every vote row across the wire to call .length on it.
+        _count: { select: { submissions: true } },
       },
     });
 
@@ -75,7 +78,7 @@ export const getTasksById = async (req: Request, res: Response) => {
         image_url: opt.image_url,
         gateway_url: opt.gateway_url,
       })),
-      totalSubmissions: task.submissions.length,
+      totalSubmissions: task._count.submissions,
     });
   } catch (err) {
     console.error(err);

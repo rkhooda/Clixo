@@ -32,6 +32,8 @@ model Task {
   submissions  Submission[]
   user         User         @relation(fields: [user_id], references: [id])
   funding      Funding[]
+
+  @@index([user_id])
 }
 
 model Option {
@@ -44,6 +46,8 @@ model Option {
   task_id     Int
   task        Task         @relation(fields: [task_id], references: [id])
   submissions Submission[]
+
+  @@index([task_id])
 }
 
 model Worker {
@@ -65,6 +69,12 @@ model Submission {
   option    Option   @relation(fields: [option_id], references: [id])
   task      Task     @relation(fields: [task_id], references: [id])
   worker    Worker   @relation(fields: [worker_id], references: [id])
+
+  // Every hot read filters on one of these two — the per-task tally, the
+  // worker's own history, and the duplicate-vote check on every single vote —
+  // and neither column had an index behind it.
+  @@index([task_id])
+  @@index([worker_id])
 }
 
 model Payout {
