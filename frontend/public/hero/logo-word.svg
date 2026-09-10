@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" width="320" height="240">
+  <rect width="320" height="240" fill="#f5f1e8"/>
+  <text x="160" y="128" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="52" font-style="italic" fill="#1a1a1f">Orbit</text>
+  <rect x="104" y="146" width="112" height="2" fill="#c8853a"/>
+  <text x="160" y="176" text-anchor="middle" font-family="Helvetica Neue,Arial,sans-serif" font-size="10" fill="#8a7f6d" letter-spacing="5">EST. 2026</text>
+</svg>

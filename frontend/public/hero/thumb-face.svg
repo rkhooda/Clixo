@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" width="320" height="240">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe6bd"/>
+      <stop offset="55%" stop-color="#ffb072"/>
+      <stop offset="100%" stop-color="#f97347"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="240" fill="url(#sky)"/>
+  <circle cx="96" cy="66" r="30" fill="#fff3d6" opacity=".85"/>
+  <path d="M0 190 L54 152 L102 178 L158 136 L222 172 L276 146 L320 168 V240 H0Z" fill="#3a2418" opacity=".22"/>
+  <g fill="#181418">
+    <circle cx="228" cy="104" r="34"/>
+    <path d="M166 240c0-38 28-64 62-64s62 26 62 64z"/>
+  </g>
+  <rect x="20" y="172" width="128" height="36" rx="4" fill="#181418"/>
+  <text x="34" y="197" font-family="Helvetica Neue,Arial,sans-serif" font-size="23" font-weight="700" fill="#ffd93d" letter-spacing="1">I QUIT.</text>
+</svg>

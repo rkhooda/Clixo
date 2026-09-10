@@ -9,45 +9,62 @@ import { cn } from "@/lib/utils";
 
 /* ── Ballots ──────────────────────────────────────────────────────────────
    Illustrative splits, not live data — the panel labels itself "Sample task".
-   Percentages are derived from the vote counts so the two can never drift.
+   Percentages and the vote target are derived from the counts so none of the
+   three can ever drift apart.
 
-   The artwork is six light-UI mockups in `public/hero/`. They are SVG, so they
-   stay crisp at any thumbnail size and cost less than a photo would; being
-   light-on-dark is also what makes the two options legible inside the ink
-   card — the previous DOM wireframes drew --line bars on --ink, ~1.2:1.
-   Swap a `src` for a real screenshot whenever one exists. */
+   The three subjects are deliberately unlike each other — a thumbnail, a
+   brand mark, a physical package — because the pitch is "any decision that
+   needs honest human judgment", and three variations on "which layout" read
+   as one narrow tool. Cycling through three different palettes is also what
+   keeps the panel from looking static between rolls.
+
+   Artwork is hand-written SVG in `public/hero/`: crisp at any size, ~600B
+   each, no optimizer round-trip. Light-on-dark is load-bearing — the earlier
+   DOM wireframes drew --line bars on --ink at ~1.2:1. Swap a `src` for a real
+   screenshot whenever one exists. */
 
 const BALLOTS = [
   {
     id: 42,
-    question: "Which landing page would you actually click?",
-    reward: 0.013,
+    question: "Which thumbnail would you actually click?",
+    pot: 0.048,
     options: [
-      { label: "Centred", votes: 16, src: "/hero/landing-centred.svg" },
-      { label: "Split", votes: 9, src: "/hero/landing-split.svg" },
+      { label: "Silhouette", votes: 16, src: "/hero/thumb-face.svg" },
+      { label: "Typographic", votes: 9, src: "/hero/thumb-text.svg" },
     ],
   },
   {
     id: 47,
-    question: "Which pricing table would you trust?",
-    reward: 0.02,
+    question: "Which logo should this coffee brand ship?",
+    pot: 0.06,
     options: [
-      { label: "Flat", votes: 9, src: "/hero/pricing-flat.svg" },
-      { label: "Featured", votes: 21, src: "/hero/pricing-featured.svg" },
+      { label: "Symbol", votes: 9, src: "/hero/logo-mark.svg" },
+      { label: "Wordmark", votes: 21, src: "/hero/logo-word.svg" },
     ],
   },
   {
     id: 51,
-    question: "Which product grid feels worth browsing?",
-    reward: 0.008,
+    question: "Which bag would you pick off the shelf?",
+    pot: 0.033,
     options: [
-      { label: "Spacious", votes: 13, src: "/hero/grid-spacious.svg" },
-      { label: "Dense", votes: 9, src: "/hero/grid-dense.svg" },
+      { label: "Quiet", votes: 13, src: "/hero/pack-minimal.svg" },
+      { label: "Loud", votes: 9, src: "/hero/pack-bold.svg" },
     ],
   },
 ];
 
+/* The feed is the only thing on a landing page that says "other people are
+   here right now". Addresses are obviously fake and never presented as live —
+   the rail above the card reads "Sample task". */
+const FEED = [
+  "0x7a…3f cast an opinion",
+  "0x21…b8 joined the pool",
+  "0xd4…09 cast an opinion",
+  "0x8c…12 joined the pool",
+];
+
 const SEAL_MS = 520;
+const FEED_MS = 1900;
 /* Dwell before the ballot rolls itself over. The slowest reveal animation —
    the reward count-up — lands at 1100ms, so this leaves ~1.9s of settled
    result to actually read. */
@@ -60,22 +77,38 @@ export function HeroBallot() {
     BALLOTS.map(() => null)
   );
   const [sealing, setSealing] = useState(false);
+  const [feedAt, setFeedAt] = useState(0);
   const sealTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const ballot = BALLOTS[index];
   const picked = picks[index];
   const revealed = picked !== null && !sealing;
 
-  const total = ballot.options[0].votes + ballot.options[1].votes;
+  /* The target IS the total, which is what makes the visitor's click mean
+     something: the task sits one opinion short, and casting it is what closes
+     the task and releases the pot. That is the actual product mechanic, not a
+     decoration — a task settles when it hits its vote target. */
+  const target = ballot.options[0].votes + ballot.options[1].votes;
+  const cast = revealed ? target : target - 1;
   const winner = ballot.options[0].votes >= ballot.options[1].votes ? 0 : 1;
   const withCrowd = picked === winner;
+  const share = ballot.pot / ballot.options[winner].votes;
 
   const countA = useCountUp(ballot.options[0].votes, revealed, 0, 900);
   const countB = useCountUp(ballot.options[1].votes, revealed, 0, 900);
   const counts = [countA, countB];
-  const reward = useCountUp(ballot.reward, revealed, 3, 1100);
+  const reward = useCountUp(share, revealed, 4, 1100);
 
   useEffect(() => () => clearTimeout(sealTimer.current), []);
+
+  /* Feed only runs while the ballot is still open — once the result is up,
+     that row is the verdict, and a task at its vote target has no one left
+     arriving anyway. */
+  useEffect(() => {
+    if (revealed || reduce) return;
+    const t = setInterval(() => setFeedAt((n) => n + 1), FEED_MS);
+    return () => clearInterval(t);
+  }, [revealed, reduce]);
 
   /* Roll to the next ballot on our own once the result has landed. Reduced
      motion opts out and keeps the manual control: an unrequested timer moving
@@ -116,29 +149,36 @@ export function HeroBallot() {
   return (
     /* Every block that only appears once revealed reserves its height while
        open, so casting a vote never shifts the card in its centred panel. */
-    <div className="w-full max-w-[400px]">
-      <div className="mb-1 flex items-center justify-between">
+    <div className="w-full max-w-[400px] rounded-lg border border-line bg-surface p-4 sm:p-5">
+      <div className="flex items-center justify-between">
         <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-lo">
           Task #{ballot.id} · {index + 1}/{BALLOTS.length}
         </span>
         <span
           className={cn(
-            "font-mono text-[10px] tracking-[0.12em] uppercase",
+            "flex items-center gap-1.5 font-mono text-[10px] tracking-[0.12em] uppercase",
             revealed ? "text-green" : "text-amber"
           )}
         >
-          {revealed ? "Closed" : "Open"}
+          <span
+            aria-hidden="true"
+            className={cn(
+              "size-1.5 rounded-full bg-current",
+              !revealed && !reduce && "animate-pulse"
+            )}
+          />
+          {revealed ? "Settled" : "Open"}
         </span>
       </div>
 
-      <div className="mb-4 min-h-[42px] font-display text-[15px] font-medium leading-snug tracking-[-0.01em] text-hi">
+      <div className="mt-2 mb-4 min-h-[42px] font-display text-[15px] font-medium leading-snug tracking-[-0.01em] text-hi">
         {ballot.question}
       </div>
 
       <div role="group" aria-label={ballot.question} className="grid grid-cols-2 gap-3">
         {ballot.options.map((option, i) => {
           const isPick = picked === i;
-          const pct = Math.round((option.votes / total) * 100);
+          const pct = Math.round((option.votes / target) * 100);
           return (
             <button
               key={option.label}
@@ -150,14 +190,14 @@ export function HeroBallot() {
               aria-disabled={picked !== null}
               aria-label={
                 revealed
-                  ? `${option.label}: ${pct} percent, ${option.votes} of ${total} opinions`
+                  ? `${option.label}: ${pct} percent, ${option.votes} of ${target} opinions`
                   : `Vote for ${option.label}`
               }
               className={cn(
                 "group/opt flex flex-col rounded-md border bg-raised p-2.5 text-left",
                 "transition-[border-color,transform] duration-200",
                 picked !== null ? "cursor-default" : "cursor-pointer",
-                picked === null && "border-line hover:-translate-y-0.5 hover:border-dim",
+                picked === null && "border-line hover:-translate-y-0.5 hover:border-amber",
                 isPick ? "border-hi" : "border-line"
               )}
             >
@@ -166,7 +206,7 @@ export function HeroBallot() {
                  the light mockup from bleeding into the tile's own edge. */}
               <div
                 className={cn(
-                  "aspect-[4/3] w-full overflow-hidden rounded-xs bg-white",
+                  "relative aspect-[4/3] w-full overflow-hidden rounded-xs bg-white",
                   "ring-1 ring-inset ring-black/10 transition-opacity duration-200",
                   picked !== null && !isPick && "opacity-40"
                 )}
@@ -185,6 +225,20 @@ export function HeroBallot() {
                     picked === null && "group-hover/opt:scale-[1.04]"
                   )}
                 />
+                {/* Reads as a real ballot rather than two pictures, and gives
+                    the pre-vote state something to point at. */}
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "absolute left-1.5 top-1.5 flex size-5 items-center justify-center rounded-xs",
+                    "font-mono text-[10px] leading-none backdrop-blur-sm transition-colors duration-200",
+                    isPick
+                      ? "bg-hi text-ink"
+                      : "bg-black/45 text-white/85 group-hover/opt:bg-black/65"
+                  )}
+                >
+                  {String.fromCharCode(65 + i)}
+                </span>
               </div>
 
               <div className="mt-2.5 flex items-center justify-between">
@@ -241,12 +295,46 @@ export function HeroBallot() {
         })}
       </div>
 
-      <div className="mt-5 h-px bg-line" />
+      {/* Pot and progress-to-target. This is the half of the product the two
+          option tiles cannot show: there is real ETH staked, and the task
+          settles the moment the target is met. */}
+      <div className="mt-4 rounded-md border border-subtle bg-ink px-3 py-2.5">
+        <div className="flex items-baseline justify-between">
+          <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-dim">
+            Staked pot
+          </span>
+          <span className="font-mono text-[12px] text-amber">
+            Ξ {ballot.pot.toFixed(3)} ETH
+          </span>
+        </div>
+        <div className="mt-2 h-[3px] overflow-hidden rounded-[1px] bg-line">
+          {reduce ? (
+            <div
+              className={cn("h-full", revealed ? "bg-green" : "bg-amber")}
+              style={{ width: `${(cast / target) * 100}%` }}
+            />
+          ) : (
+            <m.div
+              className={cn("h-full", revealed ? "bg-green" : "bg-amber")}
+              animate={{ width: `${(cast / target) * 100}%` }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            />
+          )}
+        </div>
+        <div className="mt-1.5 flex items-center justify-between font-mono text-[10px] text-dim">
+          <span>
+            {cast} of {target} opinions
+          </span>
+          <span className={revealed ? "text-green" : undefined}>
+            {revealed ? "Target reached" : "1 to close"}
+          </span>
+        </div>
+      </div>
 
       {/* Fixed, not min-h: the revealed verdict + reward rows are taller than
-         the single hint line, and a growing footer would nudge the whole card
-         inside its vertically-centred panel. */}
-      <div aria-live="polite" className="h-[56px] pt-3">
+         the open state's two lines, and a growing footer would nudge the whole
+         card inside its vertically-centred panel. */}
+      <div aria-live="polite" className="h-[52px] pt-3">
         {revealed ? (
           <>
             {reduce ? (
@@ -262,19 +350,36 @@ export function HeroBallot() {
             )}
             <div className="mt-2 flex items-center justify-between">
               <span className="font-mono text-[10px] text-dim">
-                Reward per winner
+                Paid to each winner
               </span>
               <span className="font-mono text-[11px] text-amber">
-                Ξ {reduce ? ballot.reward.toFixed(3) : reward.toFixed(3)} ETH
+                Ξ {reduce ? share.toFixed(4) : reward.toFixed(4)} ETH
               </span>
             </div>
           </>
         ) : (
-          <p className="m-0 font-mono text-[10px] tracking-[0.06em] text-dim uppercase">
-            {sealing
-              ? "Sealing vote…"
-              : "Pick one to see what the crowd said"}
-          </p>
+          <>
+            <p className="m-0 font-mono text-[10px] tracking-[0.06em] text-lo uppercase">
+              {sealing ? "Sealing vote…" : "Pick one — your vote closes this task"}
+            </p>
+            {/* Keyed so each line animates in on its own; no exit animation,
+                which keeps AnimatePresence out of the bundle. */}
+            <div className="mt-2 h-4 overflow-hidden font-mono text-[10px] text-dim">
+              {reduce ? (
+                <span>{FEED[0]}</span>
+              ) : (
+                <m.span
+                  key={feedAt}
+                  className="block"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  {FEED[feedAt % FEED.length]}
+                </m.span>
+              )}
+            </div>
+          </>
         )}
       </div>
 

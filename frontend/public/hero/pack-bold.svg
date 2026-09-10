@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" width="320" height="240">
+  <rect width="320" height="240" fill="#fdfbf6"/>
+  <ellipse cx="160" cy="222" rx="70" ry="8" fill="#20201c" opacity=".12"/>
+  <path d="M108 42h104v180H108z" fill="#b8391b"/>
+  <path d="M108 42h104v14H108z" fill="#8d2712"/>
+  <g font-family="Helvetica Neue,Arial,sans-serif" font-weight="800" fill="#ffe9cf" text-anchor="middle">
+    <text x="160" y="112" font-size="30" letter-spacing="-1">DARK</text>
+    <text x="160" y="146" font-size="30" letter-spacing="-1">ROAST</text>
+  </g>
+  <rect x="128" y="160" width="64" height="5" fill="#ffb84d"/>
+  <text x="160" y="200" text-anchor="middle" font-family="Helvetica Neue,Arial,sans-serif" font-size="10" fill="#ffe9cf" opacity=".75" letter-spacing="3">340G WHOLE BEAN</text>
+</svg>
