@@ -3,6 +3,7 @@ import { ArrowRight, ChevronDown } from "lucide-react";
 import { LiveStats } from "@/components/home/LiveStats";
 import { HeroParticles } from "@/components/home/HeroParticles";
 import { HeroBallot } from "@/components/home/HeroBallot";
+import { HowItWorks } from "@/components/home/HowItWorks";
 import { TrustSignals } from "@/components/home/TrustSignals";
 import { UseCases } from "@/components/home/UseCases";
 import { FAQ } from "@/components/home/FAQ";
@@ -130,6 +131,9 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── How It Works ─────────────────────────────────────────────────── */}
+      <HowItWorks />
 
       {/* ── Trust Signals ────────────────────────────────────────────────── */}
       <TrustSignals />
